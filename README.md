@@ -43,10 +43,11 @@ content/
       hero.jpg
 ```
 
-In Markdown, reference sidecar files relative to the published post page:
+In Markdown, reference sidecar files so they preview next to the `.md` file
+(e.g. on GitHub). The generator rewrites these to work from the published page:
 
 ```markdown
-![Hero](./hero.jpg)
+![Hero](./hello-world/hero.jpg)
 ```
 
-Those files are copied to `output/<permalink>/` next to `index.html`.
+→ rendered as `<img src="./hero.jpg">` in `output/hello-world/index.html`.

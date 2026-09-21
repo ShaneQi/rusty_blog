@@ -1,4 +1,4 @@
-use pulldown_cmark::{html, Parser};
+use pulldown_cmark::{html, CowStr, Event, Parser, Tag};
 use yaml_rust2::YamlLoader;
 use handlebars::{no_escape, Handlebars};
 use std::collections::BTreeMap;
@@ -156,12 +156,7 @@ fn read_file<P: AsRef<Path>>(path: P) -> BTreeMap<String, String> {
         }
     }
 
-    // Parse markdown to html.
-    let mut content = String::new();
-    let parser = Parser::new(&markdown);
-    html::push_html(&mut content, parser);
-
-    // Parse yaml to post info.
+    // Parse yaml to post info first so we can rewrite sidecar URLs.
     let yamls = YamlLoader::load_from_str(&yaml).expect("");
     let yaml_map = &yamls[0];
     let mut data = BTreeMap::new();
@@ -169,19 +164,65 @@ fn read_file<P: AsRef<Path>>(path: P) -> BTreeMap<String, String> {
     let date = yaml_map["date"].as_str().expect("");
     data.insert("date".to_string(), date.to_string());
     data.insert("title".to_string(), title.clone());
-    data.insert(
-        "permalink".to_string(),
-        yaml_map["permalink"]
-            .as_str()
-            .map(|s| s.to_string())
-            .unwrap_or(
-                title.to_lowercase().replace(" ", "-") + "-" +
-                    &date.chars().skip(2).take(8).collect::<String>(),
-            ),
-    );
+    let permalink = yaml_map["permalink"]
+        .as_str()
+        .map(|s| s.to_string())
+        .unwrap_or(
+            title.to_lowercase().replace(" ", "-")
+                + "-"
+                + &date.chars().skip(2).take(8).collect::<String>(),
+        );
+    data.insert("permalink".to_string(), permalink.clone());
+
+    // Parse markdown to html, rewriting ./permalink/... -> ./... for output pages.
+    let mut content = String::new();
+    let parser = Parser::new(&markdown).map(|event| rewrite_sidecar_event(event, &permalink));
+    html::push_html(&mut content, parser);
     data.insert("content".to_string(), content);
 
-    return data;
+    data
+}
+
+/// In Markdown next to `posts/<permalink>/`, authors use `./<permalink>/hero.jpg`.
+/// The rendered page lives inside `output/<permalink>/`, so strip that prefix.
+fn rewrite_sidecar_url(url: &str, permalink: &str) -> String {
+    let dotted = format!("./{}/", permalink);
+    let plain = format!("{}/", permalink);
+    if let Some(rest) = url.strip_prefix(&dotted) {
+        format!("./{rest}")
+    } else if let Some(rest) = url.strip_prefix(&plain) {
+        format!("./{rest}")
+    } else {
+        url.to_string()
+    }
+}
+
+fn rewrite_sidecar_event<'a>(event: Event<'a>, permalink: &str) -> Event<'a> {
+    match event {
+        Event::Start(Tag::Image {
+            link_type,
+            dest_url,
+            title,
+            id,
+        }) => Event::Start(Tag::Image {
+            link_type,
+            dest_url: CowStr::from(rewrite_sidecar_url(&dest_url, permalink)),
+            title,
+            id,
+        }),
+        Event::Start(Tag::Link {
+            link_type,
+            dest_url,
+            title,
+            id,
+        }) => Event::Start(Tag::Link {
+            link_type,
+            dest_url: CowStr::from(rewrite_sidecar_url(&dest_url, permalink)),
+            title,
+            id,
+        }),
+        other => other,
+    }
 }
 
 fn fetch_reset_master_hard(repo_path: &str) {
