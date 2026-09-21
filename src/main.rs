@@ -1,5 +1,5 @@
 use pulldown_cmark::{html, Parser};
-use yaml_rust::YamlLoader;
+use yaml_rust2::YamlLoader;
 use handlebars::{no_escape, Handlebars};
 use std::collections::BTreeMap;
 use std::env;

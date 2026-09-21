@@ -1,4 +1,4 @@
-# Build stage
+# Build stage — rust:1 tracks current stable
 FROM rust:1-bookworm AS builder
 
 RUN apt-get update \
