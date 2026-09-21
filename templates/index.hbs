@@ -26,9 +26,9 @@
         </p>
         <br>
         <ul>
-            {{#each . as |post|}}
+            {{#each this}}
             <li>
-                <a href="./{{post.permalink}}">{{post.title}}</a>
+                <a href="./{{permalink}}">{{title}}</a>
             </li>
             {{/each}}
         </ul>
