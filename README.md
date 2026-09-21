@@ -33,4 +33,20 @@ Or use the helper script (defaults: sibling `../content` → this repo):
 CONTENT=/path/to/content OUTPUT=/path/to/site ./docker/run.sh
 ```
 
-Content is expected to contain a `posts/` directory of Markdown files.
+Content layout:
+
+```text
+content/
+  posts/
+    hello-world.md          # front matter permalink: hello-world
+    hello-world/            # sidecar folder named like the permalink
+      hero.jpg
+```
+
+In Markdown, reference sidecar files relative to the published post page:
+
+```markdown
+![Hero](./hero.jpg)
+```
+
+Those files are copied to `output/<permalink>/` next to `index.html`.
