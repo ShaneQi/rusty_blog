@@ -14,7 +14,12 @@ cargo build --release
 
 ## Docker
 
+Images are published to GHCR on every push:
+
+`ghcr.io/shaneqi/rusty_blog:latest` and `ghcr.io/shaneqi/rusty_blog:<commit-sha>`
+
 ```bash
+docker pull ghcr.io/shaneqi/rusty_blog:latest
 docker build -t rusty_blog .
 docker run --rm \
   -v /path/to/content:/content:ro \
