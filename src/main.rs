@@ -40,11 +40,14 @@ fn main() {
     // If the input is a repo, hard reset it.
     fetch_reset_master_hard(&input_path);
 
-    // Process page bundles: <content>/<permalink>/<permalink>.md
+    // Process page bundles: posts/<permalink>/<permalink>.md
     let mut posts: Vec<BTreeMap<String, String>> = vec![];
-    for dir_item in Path::new(&input_path)
+    for dir_item in Path::new(&format!("{}posts/", input_path))
         .read_dir()
-        .expect(&format!("Failed to read content directory: {}", input_path))
+        .expect(&format!(
+            "Failed to find post directory: {}posts/",
+            input_path
+        ))
     {
         let post_dir = dir_item.expect("").path();
         if !post_dir.is_dir() {

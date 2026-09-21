@@ -33,14 +33,15 @@ Or use the helper script (defaults: sibling `../content` → this repo):
 CONTENT=/path/to/content OUTPUT=/path/to/site ./docker/run.sh
 ```
 
-Content layout (page bundles under the content root):
+Content layout (page bundles under `posts/`):
 
 ```text
 content/
-  hello-world/
-    hello-world.md   # required: <permalink>/<permalink>.md
-    hero.jpg
-    nested/chart.png
+  posts/
+    hello-world/
+      hello-world.md   # required: <permalink>/<permalink>.md
+      hero.jpg
+      nested/chart.png
 ```
 
 The folder name is the permalink. In Markdown use paths relative to that folder
