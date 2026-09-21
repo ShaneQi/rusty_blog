@@ -33,20 +33,23 @@ Or use the helper script (defaults: sibling `../content` → this repo):
 CONTENT=/path/to/content OUTPUT=/path/to/site ./docker/run.sh
 ```
 
-Content layout:
+Content layout (page bundles under `posts/`):
 
 ```text
 content/
   posts/
-    hello-world.md          # front matter permalink: hello-world
-    hello-world/            # sidecar folder named like the permalink
+    hello-world/
+      hello-world.md   # required: <permalink>/<permalink>.md
       hero.jpg
+      nested/chart.png
 ```
 
-In Markdown, reference sidecar files relative to the published post page:
+The folder name is the permalink. In Markdown use paths relative to that folder
+(they work both when previewing the `.md` and on the published page):
 
 ```markdown
 ![Hero](./hero.jpg)
 ```
 
-Those files are copied to `output/<permalink>/` next to `index.html`.
+Assets (everything except `.md` files) are copied to `output/<permalink>/`
+next to `index.html`.
