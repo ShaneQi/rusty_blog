@@ -50,18 +50,23 @@ fn main() {
         ))
     {
         let path = dir_item.expect("").path();
-        if path.extension().and_then(|s| s.to_str()).unwrap_or("") != "md" {
-            println!("Skipping file: {:?}", path);
+        // Sidecar asset dirs are named like the post permalink; skip non-Markdown.
+        if path.is_dir() || path.extension().and_then(|s| s.to_str()).unwrap_or("") != "md" {
             continue;
         }
         println!("Processing file: {:?}", path);
         let data = read_file(path);
         let post_html = handlebars.render("post", &data).expect("");
         let permalink = data["permalink"].as_str().to_string();
-        let _ = fs::create_dir_all(&format!("{}{}/", output_path, permalink));
-        File::create(&format!("{}{}/index.html", output_path, permalink))
-            .and_then(|mut file| file.write_all(&post_html.as_bytes()))
+        let post_out_dir = format!("{}{}/", output_path, permalink);
+        let _ = fs::create_dir_all(&post_out_dir);
+        File::create(format!("{}index.html", post_out_dir))
+            .and_then(|mut file| file.write_all(post_html.as_bytes()))
             .expect("");
+        copy_post_sidecar(
+            &format!("{}posts/{}", input_path, permalink),
+            &post_out_dir,
+        );
         posts.push(data);
     }
     posts.sort_by(|a, b| b["date"].as_str().cmp(a["date"].as_str()));
@@ -90,6 +95,36 @@ fn copy_assets(output_path: String) {
         let file_name = path.file_name().and_then(|f| f.to_str()).expect("");
         println!("Copying asset script file: {:?}", path);
         fs::copy(path.clone(), &format!("{}script/{}", output_path, file_name)).expect("");
+    }
+}
+
+/// Copy `content/posts/<permalink>/` into `output/<permalink>/` so Markdown can
+/// reference images as `./hero.jpg` next to the generated `index.html`.
+fn copy_post_sidecar(sidecar_path: &str, post_out_dir: &str) {
+    let sidecar = Path::new(sidecar_path);
+    if !sidecar.is_dir() {
+        return;
+    }
+    copy_dir_contents(sidecar, Path::new(post_out_dir));
+}
+
+fn copy_dir_contents(src_dir: &Path, dest_dir: &Path) {
+    for dir_item in src_dir.read_dir().expect("Failed to read post sidecar directory") {
+        let path = dir_item.expect("").path();
+        let file_name = path.file_name().and_then(|f| f.to_str()).expect("");
+        // Never replace the generated post page with a sidecar file.
+        if file_name == "index.html" {
+            println!("Skipping sidecar index.html: {:?}", path);
+            continue;
+        }
+        let dest = dest_dir.join(file_name);
+        if path.is_dir() {
+            fs::create_dir_all(&dest).expect("Failed to create sidecar output directory");
+            copy_dir_contents(&path, &dest);
+        } else {
+            println!("Copying post asset: {:?} -> {:?}", path, dest);
+            fs::copy(&path, &dest).expect("Failed to copy post sidecar asset");
+        }
     }
 }
 
