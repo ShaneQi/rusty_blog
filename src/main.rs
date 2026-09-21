@@ -1,17 +1,12 @@
-extern crate handlebars;
-extern crate pulldown_cmark;
-extern crate yaml_rust;
-extern crate git2;
-
-use pulldown_cmark::{Parser, html};
-use yaml_rust::YamlLoader;
-use handlebars::{Handlebars, no_escape};
-use std::fs::{self, File};
-use std::path::Path;
-use std::io::prelude::*;
-use std::io::BufReader;
+use pulldown_cmark::{html, Parser};
+use yaml_rust2::YamlLoader;
+use handlebars::{no_escape, Handlebars};
 use std::collections::BTreeMap;
 use std::env;
+use std::fs::{self, File};
+use std::io::prelude::*;
+use std::io::BufReader;
+use std::path::Path;
 use git2::{Repository, ResetType};
 
 fn main() {
@@ -29,12 +24,18 @@ fn main() {
     println!("Input path: {}", input_path);
     println!("Onput path: {}", output_path);
 
-    // Config handlerbars.
+    // Config handlebars.
     let mut handlebars = Handlebars::new();
     handlebars.register_escape_fn(no_escape);
-    let _ = handlebars.register_template_file("post", "./templates/post.hbs");
-    let _ = handlebars.register_template_file("index", "./templates/index.hbs");
-    let _ = handlebars.register_template_file("contact", "./templates/contact.hbs");
+    handlebars
+        .register_template_file("post", "./templates/post.hbs")
+        .expect("Failed to register post template");
+    handlebars
+        .register_template_file("index", "./templates/index.hbs")
+        .expect("Failed to register index template");
+    handlebars
+        .register_template_file("contact", "./templates/contact.hbs")
+        .expect("Failed to register contact template");
 
     // If the input is a repo, hard reset it.
     fetch_reset_master_hard(&input_path);
